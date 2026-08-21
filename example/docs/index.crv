@@ -1,0 +1,13 @@
+---
+title: Carve Home
+slug: /
+sidebar_position: 1
+---
+
+# Carve in Docusaurus
+
+This *Docusaurus page* was authored as `.crv`.
+
+- routes
+- sidebars
+- metadata
