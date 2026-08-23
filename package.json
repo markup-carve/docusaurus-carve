@@ -6,7 +6,10 @@
   "author": "Mark Scherer",
   "keywords": ["docusaurus", "carve", "documentation", "markup"],
   "main": "dist/index.cjs",
-  "exports": "./dist/index.cjs",
+  "exports": {
+    ".": "./dist/index.cjs",
+    "./package.json": "./package.json"
+  },
   "files": ["dist", "README.md", "LICENSE"],
   "engines": {"node": ">=20"},
   "scripts": {"build": "esbuild src/index.mjs --bundle --platform=node --format=cjs --external:@docusaurus/plugin-content-docs --outfile=dist/index.cjs", "prepare": "npm run build", "test": "node --test", "test:e2e": "npm run build && docusaurus build example", "test:all": "npm test && npm run test:e2e"},
