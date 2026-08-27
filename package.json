@@ -4,6 +4,10 @@
   "description": "Docusaurus docs plugin for authoring pages in Carve markup",
   "license": "MIT",
   "author": "Mark Scherer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/markup-carve/docusaurus-carve"
+  },
   "keywords": ["docusaurus", "carve", "documentation", "markup"],
   "main": "dist/index.cjs",
   "exports": {
