@@ -54,7 +54,3 @@ convert versioned-doc snapshots, `.crv` blog posts, or standalone pages; those
 use separate paths or content plugins with different metadata contracts. Carve
 content is converted to Markdown before Docusaurus compiles it, so Docusaurus
 owns heading extraction, table of contents, link handling, and React rendering.
-
-## License
-
-MIT
