@@ -34,3 +34,14 @@ test('refuses ambiguous same-stem Carve and Markdown docs', async () => {
   await writeFile(path.join(input, 'same.md'), '# Markdown\n')
   await assert.rejects(() => prepareDocs(input, path.join(root, 'out')), /map to the same/)
 })
+
+test('expands includes from the source tree before writing the mirror', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-include-'))
+  const input = path.join(root, 'docs')
+  const output = path.join(root, 'generated')
+  await mkdir(path.join(input, 'guide'), { recursive: true })
+  await writeFile(path.join(input, 'shared.crv'), 'Included text.\n')
+  await writeFile(path.join(input, 'guide', 'intro.crv'), '{{ ../shared.crv }}\n')
+  await prepareDocs(input, output)
+  assert.match(await readFile(path.join(output, 'guide', 'intro.md'), 'utf8'), /Included text\./)
+})

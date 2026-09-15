@@ -44,8 +44,14 @@ are passed to `@docusaurus/plugin-content-docs`.
 [carveDocs, {
   path: 'docs',
   carveOptions: { allowRawHtml: false },
+  includes: true,
 }]
 ```
+
+The plugin expands `{{ path }}` directives by default. Paths resolve relative
+to each document and cannot escape the configured docs directory. Set
+`includes: false` to leave directives literal, or set `includeRoot` to another
+absolute containment root.
 
 ## Scope
 
