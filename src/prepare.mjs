@@ -2,12 +2,22 @@ import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promi
 import path from 'node:path'
 
 export async function convertCarve(source, options = {}) {
-  const [{ carveToMarkdown, parse }, { parse: parseToml }, { parse: parseYaml, stringify: stringifyYaml }] = await Promise.all([
-    import('@markup-carve/carve'), import('smol-toml'), import('yaml'),
+  const [carve, { fileSystemResolver }, { parse: parseToml }, { parse: parseYaml, stringify: stringifyYaml }] = await Promise.all([
+    import('@markup-carve/carve'), import('@markup-carve/carve/node'), import('smol-toml'), import('yaml'),
   ])
   const carveOptions = options.carveOptions ?? {}
-  const document = parse(source, carveOptions)
-  const body = carveToMarkdown(source, carveOptions)
+  const document = carve.parse(source, carveOptions)
+  const expanded = options.sourcePath && (options.includes ?? true)
+    ? carve.expandIncludes(document, source, {
+        resolve: fileSystemResolver(path.resolve(options.includeRoot ?? path.dirname(options.sourcePath))),
+        sourcePath: path.resolve(options.sourcePath),
+        extensions: carveOptions.extensions,
+      })
+    : null
+  const body = expanded
+    ? carve.renderDocument(expanded.doc, { ...carveOptions, target: 'markdown' })
+    : carve.carveToMarkdown(source, carveOptions)
+  options.onWarnings?.(expanded?.warnings ?? [])
   if (!document.frontmatter) return body
 
   const { format, content } = document.frontmatter
@@ -38,14 +48,22 @@ export async function prepareDocs(sourceDir, outputDir, options = {}) {
 
   const files = await walk(output)
   const carveFiles = files.filter((file) => file.endsWith('.crv'))
+  const warnings = []
   for (const file of carveFiles) {
     const markdownFile = file.slice(0, -4) + '.md'
     if (files.includes(markdownFile)) {
       throw new Error(`Both ${path.relative(output, file)} and ${path.relative(output, markdownFile)} map to the same Docusaurus document`)
     }
-    const converted = await convertCarve(await readFile(file, 'utf8'), options)
+    const relative = path.relative(output, file)
+    const sourceFile = path.join(source, relative)
+    const converted = await convertCarve(await readFile(sourceFile, 'utf8'), {
+      ...options,
+      sourcePath: sourceFile,
+      includeRoot: options.includeRoot ?? source,
+      onWarnings(items) { warnings.push(...items) },
+    })
     await writeFile(markdownFile, converted)
     await rm(file)
   }
-  return { source, output, converted: carveFiles.length }
+  return { source, output, converted: carveFiles.length, warnings }
 }

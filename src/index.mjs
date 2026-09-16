@@ -3,9 +3,9 @@ import path from 'node:path'
 import { prepareDocs } from './prepare.mjs'
 
 export function validateOptions(args) {
-  const { carveOptions, ...docsOptions } = args.options
+  const { carveOptions, includes, includeRoot, ...docsOptions } = args.options
   const validated = contentDocsModule.validateOptions({ ...args, options: docsOptions })
-  return { ...validated, carveOptions }
+  return { ...validated, carveOptions, includes, includeRoot }
 }
 
 /**
@@ -17,10 +17,21 @@ export default async function docusaurusCarve(context, options = {}) {
   const sourcePath = path.resolve(context.siteDir, options.path ?? 'docs')
   const mirrorPath = path.join(context.generatedFilesDir, 'docusaurus-carve', options.id ?? 'default')
   const carveOptions = options.carveOptions ?? {}
+  const includeOptions = {
+    includes: options.includes,
+    includeRoot: options.includeRoot ? path.resolve(context.siteDir, options.includeRoot) : undefined,
+  }
   const docsOptions = { ...options, path: mirrorPath }
   delete docsOptions.carveOptions
+  delete docsOptions.includes
+  delete docsOptions.includeRoot
 
-  await prepareDocs(sourcePath, mirrorPath, { carveOptions })
+  const prepare = async () => {
+    const result = await prepareDocs(sourcePath, mirrorPath, { carveOptions, ...includeOptions })
+    for (const warning of result.warnings) console.warn(`docusaurus-carve: ${warning.message}`)
+    return result
+  }
+  await prepare()
   const contentDocs = typeof contentDocsModule.default === 'function'
     ? contentDocsModule.default
     : contentDocsModule.default.default
@@ -31,7 +42,7 @@ export default async function docusaurusCarve(context, options = {}) {
   return {
     ...docsPlugin,
     async loadContent() {
-      await prepareDocs(sourcePath, mirrorPath, { carveOptions })
+      await prepare()
       return originalLoadContent?.()
     },
     getPathsToWatch() {
