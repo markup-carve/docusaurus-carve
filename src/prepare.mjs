@@ -9,7 +9,10 @@ export async function convertCarve(source, options = {}) {
   const document = carve.parse(source, carveOptions)
   const expanded = options.sourcePath && (options.includes ?? true)
     ? carve.expandIncludes(document, source, {
-        resolve: fileSystemResolver(path.resolve(options.includeRoot ?? path.dirname(options.sourcePath))),
+        // A configured root reaches the resolver unchanged, so its absolute-path
+        // refusal (PART 9 section 19, I10) still fires. Resolving it here would
+        // root containment at the process working directory instead.
+        resolve: fileSystemResolver(options.includeRoot ?? path.dirname(path.resolve(options.sourcePath))),
         sourcePath: path.resolve(options.sourcePath),
         extensions: carveOptions.extensions,
       })

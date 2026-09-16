@@ -45,3 +45,12 @@ test('expands includes from the source tree before writing the mirror', async ()
   await prepareDocs(input, output)
   assert.match(await readFile(path.join(output, 'guide', 'intro.md'), 'utf8'), /Included text\./)
 })
+
+test('refuses a relative include root instead of rooting it at the cwd', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-relroot-'))
+  const input = path.join(root, 'docs')
+  const output = path.join(root, 'generated')
+  await mkdir(input, { recursive: true })
+  await writeFile(path.join(input, 'intro.crv'), '{{ shared.crv }}\n')
+  await assert.rejects(() => prepareDocs(input, output, { includeRoot: '..' }), /absolute path/)
+})
