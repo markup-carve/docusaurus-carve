@@ -1,6 +1,6 @@
 {
   "name": "@markup-carve/docusaurus-carve",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Docusaurus docs plugin for authoring pages in Carve markup",
   "license": "MIT",
   "author": "Mark Scherer",
