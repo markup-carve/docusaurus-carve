@@ -81,3 +81,27 @@ test('still resolves the entry point the map already named', () => {
   // Requires `dist/`, which `prepare` builds on install.
   assert.equal(codeOf('@markup-carve/docusaurus-carve'), 'RESOLVED')
 })
+
+test('the bundle resolves its dependencies instead of inlining them', () => {
+  // The published 0.1.1 bundle carried the whole Carve engine inside it: only
+  // `@docusaurus/plugin-content-docs` was external, so every declared runtime
+  // dependency was inlined and frozen at publish time. A site using the plugin
+  // rendered through that copy, never the engine in its own node_modules, and
+  // npm installed a second unused one alongside it. That bundle predates the
+  // render-loss work entirely: no `destination-denied`, no `ruby-flattened`.
+  //
+  // This reads the built artifact, because a declared dependency says nothing
+  // about whether the bundler left it alone.
+  const bundle = readFileSync(new URL('../dist/index.cjs', import.meta.url), 'utf8')
+
+  assert.ok(
+    bundle.length < 200_000,
+    `dist/index.cjs is ${bundle.length} bytes; a dependency is inlined`,
+  )
+  for (const name of Object.keys(pkg.dependencies ?? {})) {
+    assert.ok(
+      bundle.includes(`require("${name}")`) || bundle.includes(`import("${name}")`),
+      `${name} is not resolved at runtime`,
+    )
+  }
+})

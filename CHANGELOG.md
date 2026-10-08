@@ -1,5 +1,24 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- The published bundle resolves its dependencies instead of inlining them. Only
+  `@docusaurus/plugin-content-docs` was external, so the whole Carve engine,
+  `smol-toml` and `yaml` were bundled into `dist/index.cjs` and frozen at
+  publish time: a site rendered through that copy rather than the engine in its
+  own `node_modules`, while npm installed a second, unused one alongside it. The
+  published 0.1.1 bundle predates the render-loss work entirely, so no engine
+  release since could reach a consumer without a release here. The tarball goes
+  from 2.4 MB to 7.5 KB, and a packaging test reads the built artifact.
+
+### Changed
+
+- Tested against `@markup-carve/carve` 0.1.10. The declared range `^0.1.7`
+  already resolved it, but the committed lockfile held 0.1.7, so CI had never
+  run the engine a consumer installs.
+
 ## 0.1.1
 
 - `{{ path }}` include directives now expand, resolved relative to each document
