@@ -11,13 +11,13 @@
   own `node_modules`, while npm installed a second, unused one alongside it. The
   published 0.1.1 bundle predates the render-loss work entirely, so no engine
   release since could reach a consumer without a release here. The tarball goes
-  from 2.4 MB to 7.5 KB, and a packaging test reads the built artifact.
+  from 2.4 MB to 7.5 KB, and a packaging test reads the built artifact (#18).
 
 ### Changed
 
 - Tested against `@markup-carve/carve` 0.1.10. The declared range `^0.1.7`
   already resolved it, but the committed lockfile held 0.1.7, so CI had never
-  run the engine a consumer installs.
+  run the engine a consumer installs (#18).
 
 ## 0.1.1
 
