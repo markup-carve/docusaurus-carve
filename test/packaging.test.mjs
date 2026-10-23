@@ -98,9 +98,12 @@ test('the bundle resolves its dependencies instead of inlining them', () => {
     bundle.length < 200_000,
     `dist/index.cjs is ${bundle.length} bytes; a dependency is inlined`,
   )
+  // The grammar is loaded by the client module, which Docusaurus bundles itself.
+  const client = readFileSync(new URL('../client/prism-carve.js', import.meta.url), 'utf8')
   for (const name of Object.keys(pkg.dependencies ?? {})) {
     assert.ok(
-      bundle.includes(`require("${name}")`) || bundle.includes(`import("${name}")`),
+      bundle.includes(`require("${name}")`) || bundle.includes(`import("${name}")`)
+        || client.includes(`require('${name}/`),
       `${name} is not resolved at runtime`,
     )
   }

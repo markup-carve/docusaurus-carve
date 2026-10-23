@@ -11,3 +11,11 @@ This *Docusaurus page* was authored as `.crv`.
 - routes
 - sidebars
 - metadata
+
+A Carve sample, highlighted by the grammar the plugin registers:
+
+```carve
+# Title
+
+Some *strong* and /emphasized/ text.
+```

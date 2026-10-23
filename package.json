@@ -14,12 +14,13 @@
     ".": "./dist/index.cjs",
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "client", "README.md", "LICENSE"],
   "engines": {"node": ">=20"},
-  "scripts": {"build": "esbuild src/index.mjs --bundle --platform=node --format=cjs --packages=external --outfile=dist/index.cjs", "prepare": "npm run build", "test": "node --test", "test:e2e": "npm run build && docusaurus build example", "test:all": "npm test && npm run test:e2e"},
+  "scripts": {"build": "esbuild src/index.mjs --bundle --platform=node --format=cjs --packages=external --outfile=dist/index.cjs --log-override:empty-import-meta=silent", "prepare": "npm run build", "test": "node --test", "test:e2e": "npm run build && docusaurus build example && node scripts/check-e2e.mjs", "test:all": "npm test && npm run test:e2e"},
   "dependencies": {
     "@docusaurus/plugin-content-docs": "^3.10.2",
-    "@markup-carve/carve": "^0.1.7",
+    "@markup-carve/carve": "^0.1.13",
+    "@markup-carve/carve-grammars": "^0.1.17",
     "smol-toml": "^1.4.2",
     "yaml": "^2.8.1"
   },
@@ -28,5 +29,5 @@
     "@docusaurus/preset-classic": "^3.10.2",
     "esbuild": "^0.25.0"
   },
-  "peerDependencies": {"@docusaurus/core": ">=3.8.0 <4.0.0"}
+  "peerDependencies": {"@docusaurus/core": ">=3.8.0 <4.0.0", "prism-react-renderer": "^2.0.0"}
 }
