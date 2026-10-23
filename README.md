@@ -53,6 +53,39 @@ to each document and cannot escape the configured docs directory. Set
 `includes: false` to leave directives literal, or set `includeRoot` to another
 absolute containment root.
 
+A directive can take one named region of a file instead of the whole file. In
+a Carve file the region sits between `%% #region intro` and `%% #endregion`. A
+source file can be included as a code block, with region markers in its own
+comment syntax (`// #region demo` ... `// #endregion`):
+
+```text
+{{ shared.crv @region:intro }}
+{{ src/example.ts @region:demo @code:ts }}
+```
+
+## Warnings
+
+Include problems and Markdown export losses are printed during the build, one
+line each, with the rule id and the file, line and column. A loss is something
+the generated Markdown no longer says, such as a link whose `javascript:`
+destination was blanked. Set `lint: true` to also print the engine's lint
+findings, such as a link to a fragment no heading defines:
+
+```js
+[carveDocs, { path: 'docs', lint: true }]
+```
+
+## Highlighting Carve samples
+
+The plugin registers the Carve Prism grammar from
+`@markup-carve/carve-grammars`, so a fenced block marked `carve` or `crv` is
+highlighted by Docusaurus' code blocks with no theme changes. Set
+`prism: false` to leave those fences plain, for example when the site
+registers its own grammar. The site's own `prism-react-renderer` (a
+Docusaurus 3 dependency) is used.
+
+The plugin needs `@markup-carve/carve` 0.1.13 or later.
+
 ## Scope
 
 This integration covers the current Docusaurus docs directory. It does not yet
