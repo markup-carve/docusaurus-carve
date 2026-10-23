@@ -95,6 +95,11 @@ links keep working. Two limits:
   in the table of contents.
 - A block holding a footnote reference stays Markdown, because Docusaurus
   numbers the footnotes itself; the build reports it as `html-block-footnote`.
+- A block holding a site-relative link or image (`other.md`, `./logo.png`,
+  `/docs/x`) stays Markdown, because Docusaurus resolves those only in
+  Markdown; reported as `html-block-relative-link`. Absolute URLs and `#`
+  fragments are fine, so a captioned figure keeps its caption when its image
+  is a full URL.
 
 With the default `mdx` format the HTML is embedded through
 `dangerouslySetInnerHTML`; with `markdown.format: 'md'` or `'detect'` it is a

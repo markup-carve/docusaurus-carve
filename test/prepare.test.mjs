@@ -114,14 +114,14 @@ test('htmlBlocks is off by default', async () => {
 })
 
 test('htmlBlocks keeps what Markdown can carry and renders the rest as HTML', async () => {
-  const source = '---\ntitle: Mixed\n---\n\n# Title\n\nA *strong* paragraph.\n\n{.note}\n:::\nInside a div.\n:::\n\n![Alt](a.png)\n^ A caption\n'
+  const source = '---\ntitle: Mixed\n---\n\n# Title\n\nA *strong* paragraph.\n\n{.note}\n:::\nInside a div.\n:::\n\n![Alt](https://example.com/a.png)\n^ A caption\n'
   const markdown = await convertCarve(source, { htmlBlocks: true })
   assert.equal(markdown, [
     '---\ntitle: Mixed\n---\n',
     '# Title\n',
     'A **strong** paragraph.\n',
     '<div className="carve-html" dangerouslySetInnerHTML={{ __html: "<div class=\\"note\\">\\n  <p>Inside a div.</p>\\n</div>" }} />\n',
-    '<div className="carve-html" dangerouslySetInnerHTML={{ __html: "<figure>\\n  <img src=\\"a.png\\" alt=\\"Alt\\">\\n  <figcaption>A caption</figcaption>\\n</figure>" }} />\n',
+    '<div className="carve-html" dangerouslySetInnerHTML={{ __html: "<figure>\\n  <img src=\\"https://example.com/a.png\\" alt=\\"Alt\\">\\n  <figcaption>A caption</figcaption>\\n</figure>" }} />\n',
   ].join('\n'))
 })
 
@@ -141,6 +141,19 @@ test('htmlBlocks keeps a block with a footnote reference as Markdown, and says s
   })
   assert.equal(markdown, 'In a div[^1].\n\n[^1]: The note.\n')
   assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['html-block-footnote', 2]])
+})
+
+test('htmlBlocks keeps a block with a site-relative link or image as Markdown', async () => {
+  const warnings = []
+  const markdown = await convertCarve(
+    '{.a}\n:::\nSee [other](other.md).\n:::\n\n{.b}\n:::\n![Logo](./logo.png)\n:::\n\n{.c}\n:::\nSee [site](https://example.com) and [top](#top).\n:::\n',
+    { htmlBlocks: true, onWarnings: (items) => warnings.push(...items) },
+  )
+  assert.match(markdown, /^See \[other\]\(other\.md\)\.\n\n!\[Logo\]\(\.\/logo\.png\)\n\n<div className="carve-html"/)
+  assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [
+    ['html-block-relative-link', 2],
+    ['html-block-relative-link', 7],
+  ])
 })
 
 test('htmlBlocks applies to included content and still reports losses', async () => {

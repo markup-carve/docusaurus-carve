@@ -67,7 +67,7 @@ const squash = (html) => html.replace(/\s+/g, ' ').trim()
  * Markdown for every top-level block Markdown can carry, HTML for the rest.
  * A block can be carried when its Markdown, read back by Carve, renders the
  * same HTML. Headings always stay Markdown so Docusaurus keeps the TOC, and
- * so does a block with a footnote reference.
+ * so does a block with a footnote reference or a site-relative link or image.
  */
 function mixedBody(carve, tree, carveOptions, format, reports, warnings) {
   // The caller writes the frontmatter itself.
@@ -81,11 +81,13 @@ function mixedBody(carve, tree, carveOptions, format, reports, warnings) {
     const html = carve.renderDocument(one, { ...htmlOptions, target: 'html' })
     const markdown = carve.renderDocument(one, { ...carveOptions, target: 'markdown' })
     if (squash(carve.carveToHtml(carve.markdownToCarve(markdown), htmlOptions)) === squash(html)) return child
-    // Docusaurus numbers the footnotes, so a reference inside HTML would point nowhere.
-    if (JSON.stringify(child).includes('"type":"footnote_ref"')) {
+    // Docusaurus numbers the footnotes and rewrites site-relative links and
+    // images; inside HTML it does neither, so those blocks stay Markdown.
+    const kept = keepReason(child)
+    if (kept) {
       warnings.push({
-        message: 'Block holds a footnote reference, so it stays Markdown and loses what Markdown cannot say',
-        rule: 'html-block-footnote',
+        message: `Block holds ${kept.what}, so it stays Markdown and loses what Markdown cannot say`,
+        rule: kept.rule,
         line: child.pos?.startLine,
         column: child.pos?.startColumn,
         file: child.pos?.file,
@@ -100,6 +102,25 @@ function mixedBody(carve, tree, carveOptions, format, reports, warnings) {
   const report = carve.renderDocumentWithReport({ ...resolved, children }, { ...carveOptions, target: 'markdown' })
   reports.push(report)
   return report.value.replace(new RegExp(`^${nonce}(\\d+)$`, 'gm'), (_, index) => embedHtml(blocks[Number(index)], format))
+}
+
+const ABSOLUTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i
+
+function keepReason(block) {
+  let reason = null
+  const visit = (node) => {
+    if (reason || !node || typeof node !== 'object') return
+    if (node.type === 'footnote_ref') reason = { rule: 'html-block-footnote', what: 'a footnote reference' }
+    else if ((node.type === 'link' && !ABSOLUTE.test(node.href ?? '')) || (node.type === 'image' && !ABSOLUTE.test(node.src ?? ''))) {
+      reason = { rule: 'html-block-relative-link', what: `a site-relative ${node.type}` }
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(visit)
+      else if (value && typeof value === 'object' && value !== node.pos) visit(value)
+    }
+  }
+  visit(block)
+  return reason
 }
 
 /** An HTML block the docs plugin passes through unchanged. */
