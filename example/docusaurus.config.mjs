@@ -5,6 +5,6 @@ export default {
   url: 'https://example.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
-  plugins: [[carveDocs, { path: 'docs', routeBasePath: '/', sidebarPath: './sidebars.js' }]],
+  plugins: [[carveDocs, { path: 'docs', routeBasePath: '/', sidebarPath: './sidebars.js', htmlBlocks: true }]],
   presets: [['@docusaurus/preset-classic', { docs: false, blog: false }]],
 }

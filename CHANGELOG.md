@@ -12,6 +12,9 @@
   `@markup-carve/carve-grammars`; `prism: false` turns it off (#25).
 - An include directive can take one named region of a file, either Carve
   content or a source file included as a code block (#25).
+- `htmlBlocks: true` renders the blocks Markdown cannot carry (a div with a
+  class, a captioned figure, an admonition) as HTML and keeps the rest,
+  headings included, as Markdown. Off by default (#27).
 
 ### Changed
 

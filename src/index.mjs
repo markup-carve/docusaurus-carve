@@ -8,9 +8,9 @@ const packageRoot = path.resolve(typeof __dirname === 'string' ? __dirname : pat
 export const prismClientModule = path.join(packageRoot, 'client', 'prism-carve.js')
 
 export function validateOptions(args) {
-  const { carveOptions, includes, includeRoot, lint, prism, ...docsOptions } = args.options
+  const { carveOptions, includes, includeRoot, lint, prism, htmlBlocks, ...docsOptions } = args.options
   const validated = contentDocsModule.validateOptions({ ...args, options: docsOptions })
-  return { ...validated, carveOptions, includes, includeRoot, lint, prism }
+  return { ...validated, carveOptions, includes, includeRoot, lint, prism, htmlBlocks }
 }
 
 /**
@@ -22,8 +22,12 @@ export default async function docusaurusCarve(context, options = {}) {
   const sourcePath = path.resolve(context.siteDir, options.path ?? 'docs')
   const mirrorPath = path.join(context.generatedFilesDir, 'docusaurus-carve', options.id ?? 'default')
   const carveOptions = options.carveOptions ?? {}
+  // The mirror is written as .md, which `detect` reads as CommonMark.
+  const siteFormat = context.siteConfig?.markdown?.format ?? 'mdx'
   const includeOptions = {
     lint: options.lint,
+    htmlBlocks: options.htmlBlocks,
+    markdownFormat: siteFormat === 'mdx' ? 'mdx' : 'md',
     includes: options.includes,
     includeRoot: options.includeRoot ? path.resolve(context.siteDir, options.includeRoot) : undefined,
   }
@@ -33,6 +37,7 @@ export default async function docusaurusCarve(context, options = {}) {
   delete docsOptions.includeRoot
   delete docsOptions.lint
   delete docsOptions.prism
+  delete docsOptions.htmlBlocks
 
   const prepare = async () => {
     const result = await prepareDocs(sourcePath, mirrorPath, { carveOptions, ...includeOptions })
@@ -64,4 +69,4 @@ export default async function docusaurusCarve(context, options = {}) {
   }
 }
 
-export { convertCarve, formatWarning, prepareDocs } from './prepare.mjs'
+export { convertCarve, embedHtml, formatWarning, prepareDocs } from './prepare.mjs'

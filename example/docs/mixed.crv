@@ -1,0 +1,21 @@
+---
+title: Mixed blocks
+sidebar_position: 3
+---
+
+# Mixed blocks
+
+## Kept as Markdown
+
+A paragraph with *strong* text stays Markdown, so this heading is in the table
+of contents.
+
+## Rendered as HTML
+
+{.carve-note}
+:::
+A div with a class has no Markdown form.
+:::
+
+![Diagram](https://example.com/diagram.png)
+^ A figure caption

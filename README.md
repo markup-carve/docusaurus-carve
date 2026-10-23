@@ -75,6 +75,39 @@ findings, such as a link to a fragment no heading defines:
 [carveDocs, { path: 'docs', lint: true }]
 ```
 
+## HTML for what Markdown cannot say
+
+Carve goes to Docusaurus as Markdown, and some constructs have no Markdown
+form: a div or a paragraph with a class, a figure with a caption, an
+admonition. By default they are flattened. Set `htmlBlocks: true` to render
+those blocks as HTML instead and keep the rest as Markdown:
+
+```js
+[carveDocs, { path: 'docs', htmlBlocks: true }]
+```
+
+A top-level block stays Markdown when its Markdown, read back by Carve, renders
+the same HTML; otherwise it is written as HTML inside a `div.carve-html`.
+Headings always stay Markdown, so the table of contents, heading anchors and
+links keep working. Two limits:
+
+- A heading inside a block that becomes HTML (a heading in a div, say) is not
+  in the table of contents.
+- A block holding a footnote reference stays Markdown, because Docusaurus
+  numbers the footnotes itself; the build reports it as `html-block-footnote`.
+- A block holding a site-relative link or image (`other.md`, `./logo.png`,
+  `/docs/x`) stays Markdown, because Docusaurus resolves those only in
+  Markdown; reported as `html-block-relative-link`. Absolute URLs and `#`
+  fragments are fine, so a captioned figure keeps its caption when its image
+  is a full URL.
+
+With the default `mdx` format the HTML is embedded through
+`dangerouslySetInnerHTML`; with `markdown.format: 'md'` or `'detect'` it is a
+raw HTML block. Either way it is Carve's own HTML, with the same `carveOptions`
+(keep `allowRawHtml: false` for untrusted content). Docusaurus does not style
+Carve's classes, so add CSS for the ones you use, such as
+`.carve-html aside.admonition`.
+
 ## Highlighting Carve samples
 
 The plugin registers the Carve Prism grammar from
@@ -92,4 +125,5 @@ This integration covers the current Docusaurus docs directory. It does not yet
 convert versioned-doc snapshots, `.crv` blog posts, or standalone pages; those
 use separate paths or content plugins with different metadata contracts. Carve
 content is converted to Markdown before Docusaurus compiles it, so Docusaurus
-owns heading extraction, table of contents, link handling, and React rendering.
+owns heading extraction, table of contents, link handling, and React rendering;
+`htmlBlocks` only changes how the blocks Markdown cannot carry are written.
