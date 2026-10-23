@@ -1,21 +1,21 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.3] - 2026-10-23
 
 ### Added
 
 - Markdown export losses are reported during the build, with the rule id, file,
-  line and column. Include warnings use the same format.
+  line and column. Include warnings use the same format (#25).
 - `lint: true` prints the engine's lint findings during prepare, including
-  findings in included files.
+  findings in included files (#25).
 - `carve` and `crv` fences are highlighted with the Carve Prism grammar from
-  `@markup-carve/carve-grammars`; `prism: false` turns it off.
+  `@markup-carve/carve-grammars`; `prism: false` turns it off (#25).
 - An include directive can take one named region of a file, either Carve
-  content or a source file included as a code block.
+  content or a source file included as a code block (#25).
 
 ### Changed
 
-- Requires `@markup-carve/carve` 0.1.13 or later.
+- Requires `@markup-carve/carve` 0.1.13 or later (#25).
 
 ## [0.1.2] - 2026-10-08
 
