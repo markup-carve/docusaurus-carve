@@ -18,20 +18,30 @@ export async function convertCarve(source, options = {}) {
     : undefined
   const document = carve.parse(source, { ...carveOptions, positions: true })
   const warnings = []
-  let report
+  let tree = document
   if (includes) {
     const expanded = carve.expandIncludes(document, source, { ...includes, extensions: carveOptions.extensions })
     warnings.push(...expanded.warnings)
-    report = carve.renderDocumentWithReport(expanded.doc, { ...carveOptions, target: 'markdown' })
+    tree = expanded.doc
+  }
+  const reports = []
+  let body
+  if (options.htmlBlocks) {
+    body = mixedBody(carve, tree, carveOptions, options.markdownFormat ?? 'mdx', reports, warnings)
   } else {
-    report = carve.carveToMarkdownWithReport(source, carveOptions)
+    const report = includes
+      ? carve.renderDocumentWithReport(tree, { ...carveOptions, target: 'markdown' })
+      : carve.carveToMarkdownWithReport(source, carveOptions)
+    reports.push(report)
+    body = report.value
   }
-  const body = report.value
   // A loss is something the Markdown the docs plugin reads no longer says.
-  for (const loss of report.losses) {
-    warnings.push({ message: loss.message, rule: loss.code, line: loss.pos?.startLine, column: loss.pos?.startColumn, file: loss.pos?.file })
+  for (const report of reports) {
+    for (const loss of report.losses) {
+      warnings.push({ message: loss.message, rule: loss.code, line: loss.pos?.startLine, column: loss.pos?.startColumn, file: loss.pos?.file })
+    }
+    if (report.truncated) warnings.push({ message: `${report.totalLosses} Markdown export losses in total; the rest were not reported` })
   }
-  if (report.truncated) warnings.push({ message: `${report.totalLosses} Markdown export losses in total; the rest were not reported` })
   if (options.lint) {
     const reported = new Set(warnings.map((warning) => `${warning.rule}\0${warning.message}`))
     for (const finding of carve.lintCarve(source, { includes, extensions: carveOptions.extensions })) {
@@ -48,6 +58,56 @@ export async function convertCarve(source, options = {}) {
   else if (format === 'json') data = content.trim() === '' ? {} : JSON.parse(content)
   else throw new Error(`Docusaurus Carve does not support frontmatter format ${JSON.stringify(format)}`)
   return `---\n${stringifyYaml(data).trimEnd()}\n---\n\n${body}`
+}
+
+const KEEP_MARKDOWN = new Set(['heading', 'link_reference_definition'])
+const squash = (html) => html.replace(/\s+/g, ' ').trim()
+
+/**
+ * Markdown for every top-level block Markdown can carry, HTML for the rest.
+ * A block can be carried when its Markdown, read back by Carve, renders the
+ * same HTML. Headings always stay Markdown so Docusaurus keeps the TOC, and
+ * so does a block with a footnote reference.
+ */
+function mixedBody(carve, tree, carveOptions, format, reports, warnings) {
+  // The caller writes the frontmatter itself.
+  const { frontmatter, ...resolved } = carve.resolve(tree, carveOptions)
+  const htmlOptions = { ...carveOptions, sections: false }
+  const nonce = `carvehtml${Math.random().toString(36).slice(2)}x`
+  const blocks = []
+  const children = resolved.children.map((child) => {
+    if (KEEP_MARKDOWN.has(child.type)) return child
+    const one = { ...resolved, children: [child], footnoteDefs: {} }
+    const html = carve.renderDocument(one, { ...htmlOptions, target: 'html' })
+    const markdown = carve.renderDocument(one, { ...carveOptions, target: 'markdown' })
+    if (squash(carve.carveToHtml(carve.markdownToCarve(markdown), htmlOptions)) === squash(html)) return child
+    // Docusaurus numbers the footnotes, so a reference inside HTML would point nowhere.
+    if (JSON.stringify(child).includes('"type":"footnote_ref"')) {
+      warnings.push({
+        message: 'Block holds a footnote reference, so it stays Markdown and loses what Markdown cannot say',
+        rule: 'html-block-footnote',
+        line: child.pos?.startLine,
+        column: child.pos?.startColumn,
+        file: child.pos?.file,
+      })
+      return child
+    }
+    const report = carve.renderDocumentWithReport(one, { ...htmlOptions, target: 'html' })
+    reports.push(report)
+    blocks.push(report.value.trim())
+    return { type: 'paragraph', children: [{ type: 'text', value: `${nonce}${blocks.length - 1}` }] }
+  })
+  const report = carve.renderDocumentWithReport({ ...resolved, children }, { ...carveOptions, target: 'markdown' })
+  reports.push(report)
+  return report.value.replace(new RegExp(`^${nonce}(\\d+)$`, 'gm'), (_, index) => embedHtml(blocks[Number(index)], format))
+}
+
+/** An HTML block the docs plugin passes through unchanged. */
+export function embedHtml(html, format) {
+  // MDX reads raw HTML as JSX, which most real HTML is not.
+  if (format === 'mdx') return `<div className="carve-html" dangerouslySetInnerHTML={{ __html: ${JSON.stringify(html)} }} />`
+  // A blank line ends a CommonMark HTML block, so the block stays on one line.
+  return `<div class="carve-html">${html.replace(/\n/g, '&#10;')}</div>`
 }
 
 async function walk(directory) {

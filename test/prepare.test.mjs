@@ -107,3 +107,51 @@ test('lints during prepare only when asked, and reports an include failure once'
     'Link to "#zzz" matches no id in this document, so the link goes nowhere. [broken-fragment-link] (shared.crv, line 1, column 5)',
   ])
 })
+
+test('htmlBlocks is off by default', async () => {
+  const markdown = await convertCarve('{.note}\n:::\nInside.\n:::\n')
+  assert.equal(markdown, 'Inside.\n')
+})
+
+test('htmlBlocks keeps what Markdown can carry and renders the rest as HTML', async () => {
+  const source = '---\ntitle: Mixed\n---\n\n# Title\n\nA *strong* paragraph.\n\n{.note}\n:::\nInside a div.\n:::\n\n![Alt](a.png)\n^ A caption\n'
+  const markdown = await convertCarve(source, { htmlBlocks: true })
+  assert.equal(markdown, [
+    '---\ntitle: Mixed\n---\n',
+    '# Title\n',
+    'A **strong** paragraph.\n',
+    '<div className="carve-html" dangerouslySetInnerHTML={{ __html: "<div class=\\"note\\">\\n  <p>Inside a div.</p>\\n</div>" }} />\n',
+    '<div className="carve-html" dangerouslySetInnerHTML={{ __html: "<figure>\\n  <img src=\\"a.png\\" alt=\\"Alt\\">\\n  <figcaption>A caption</figcaption>\\n</figure>" }} />\n',
+  ].join('\n'))
+})
+
+test('htmlBlocks writes one-line raw HTML for the CommonMark format', async () => {
+  const markdown = await convertCarve('{.note}\n:::\nA\n\n```\nx\n\ny\n```\n:::\n', { htmlBlocks: true, markdownFormat: 'md' })
+  const [line, ...rest] = markdown.trimEnd().split('\n')
+  assert.deepEqual(rest, [])
+  assert.match(line, /^<div class="carve-html"><div class="note">&#10;/)
+  assert.match(line, /x&#10;&#10;y/)
+})
+
+test('htmlBlocks keeps a block with a footnote reference as Markdown, and says so', async () => {
+  const warnings = []
+  const markdown = await convertCarve('{.note}\n:::\nIn a div[^1].\n:::\n\n[^1]: The note.\n', {
+    htmlBlocks: true,
+    onWarnings: (items) => warnings.push(...items),
+  })
+  assert.equal(markdown, 'In a div[^1].\n\n[^1]: The note.\n')
+  assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['html-block-footnote', 2]])
+})
+
+test('htmlBlocks applies to included content and still reports losses', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-mixed-'))
+  const input = path.join(root, 'docs')
+  await mkdir(input, { recursive: true })
+  await writeFile(path.join(input, '_part.crv'), '{.note}\n:::\nShared [x](javascript:y).\n:::\n')
+  await writeFile(path.join(input, 'page.crv'), '# Page\n\n{{ _part.crv }}\n')
+  const result = await prepareDocs(input, path.join(root, 'generated'), { htmlBlocks: true })
+  const markdown = await readFile(path.join(root, 'generated', 'page.md'), 'utf8')
+  assert.match(markdown, /^# Page\n\n<div className="carve-html" dangerouslySetInnerHTML=\{\{ __html: "<div class=\\"note\\">/)
+  const own = result.warnings.filter((warning) => warning.file === path.join(input, '_part.crv') && warning.rule === 'destination-denied')
+  assert.equal(own.length, 2, 'the included block and the partial itself each report the blanked link')
+})
