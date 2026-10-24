@@ -20,7 +20,7 @@
   "dependencies": {
     "@docusaurus/plugin-content-docs": "^3.10.2",
     "@markup-carve/carve": "^0.1.13",
-    "@markup-carve/carve-grammars": "^0.1.17",
+    "@markup-carve/carve-grammars": "^0.1.19",
     "smol-toml": "^1.4.2",
     "yaml": "^2.8.1"
   },
