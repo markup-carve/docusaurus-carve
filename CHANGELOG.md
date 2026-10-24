@@ -2,11 +2,12 @@
 
 ## [0.1.4] - 2026-10-24
 
-Carve fences in Docusaurus documentation follow the latest grammar fixes for definition lists and fenced code.
+Carve fences follow the current grammar. Rendering and Markdown loss warnings follow the published Carve engine.
 
 ### Fixes
 
-- Definition list and fence highlighting follows carve-grammars 0.1.19 (#30).
+- Definition list and fence highlighting follows carve-grammars 0.1.20 (#30, #34).
+- Table spans, wrapped attributes, and continuation markers follow the Carve 0.1.12 rulings; Markdown export warns about container, caption, attribute, and escaped HTML losses (#34).
 
 **Full Changelog**: https://github.com/markup-carve/docusaurus-carve/compare/0.1.3...0.1.4
 
