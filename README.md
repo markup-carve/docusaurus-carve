@@ -117,7 +117,7 @@ highlighted by Docusaurus' code blocks with no theme changes. Set
 registers its own grammar. The site's own `prism-react-renderer` (a
 Docusaurus 3 dependency) is used.
 
-The plugin needs `@markup-carve/carve` 0.1.13 or later.
+The plugin needs `@markup-carve/carve` 0.1.14 or later.
 
 ## Scope
 
