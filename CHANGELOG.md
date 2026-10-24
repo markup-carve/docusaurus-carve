@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.4] - 2026-10-24
+
+Carve fences in Docusaurus documentation follow the latest grammar fixes for definition lists and fenced code.
+
+### Fixes
+
+- Definition list and fence highlighting follows carve-grammars 0.1.19 (#30).
+
+**Full Changelog**: https://github.com/markup-carve/docusaurus-carve/compare/0.1.3...0.1.4
+
 ## [0.1.3] - 2026-10-23
 
 ### Added
