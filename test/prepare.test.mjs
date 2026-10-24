@@ -140,7 +140,7 @@ test('htmlBlocks keeps a block with a footnote reference as Markdown, and says s
     onWarnings: (items) => warnings.push(...items),
   })
   assert.equal(markdown, 'In a div[^1].\n\n[^1]: The note.\n')
-  assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['html-block-footnote', 2]])
+  assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['html-block-footnote', 2], ['markdown-attributes-dropped', 2], ['markdown-container-flattened', 2]])
 })
 
 test('htmlBlocks keeps a block with a site-relative link or image as Markdown', async () => {
@@ -153,6 +153,10 @@ test('htmlBlocks keeps a block with a site-relative link or image as Markdown', 
   assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [
     ['html-block-relative-link', 2],
     ['html-block-relative-link', 7],
+    ['markdown-attributes-dropped', 2],
+    ['markdown-container-flattened', 2],
+    ['markdown-attributes-dropped', 7],
+    ['markdown-container-flattened', 7],
   ])
 })
 

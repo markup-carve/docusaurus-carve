@@ -19,8 +19,8 @@
   "scripts": {"build": "esbuild src/index.mjs --bundle --platform=node --format=cjs --packages=external --outfile=dist/index.cjs --log-override:empty-import-meta=silent", "prepare": "npm run build", "test": "node --test", "test:e2e": "npm run build && docusaurus build example && node scripts/check-e2e.mjs", "test:all": "npm test && npm run test:e2e"},
   "dependencies": {
     "@docusaurus/plugin-content-docs": "^3.10.2",
-    "@markup-carve/carve": "^0.1.13",
-    "@markup-carve/carve-grammars": "^0.1.19",
+    "@markup-carve/carve": "^0.1.14",
+    "@markup-carve/carve-grammars": "^0.1.20",
     "smol-toml": "^1.4.2",
     "yaml": "^2.8.1"
   },
