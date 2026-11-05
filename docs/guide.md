@@ -71,6 +71,21 @@ findings, such as a link to a fragment no heading defines:
 [carveDocs, { path: 'docs', lint: true }]
 ```
 
+Hints, advisory findings such as a thematic break not written `***`, are
+skipped. Pass an object instead of `true` to print them, or to turn on lint
+rules that are off by default:
+
+```js
+[carveDocs, { path: 'docs', lint: { hints: true, enabledRules: ['non-descriptive-link-text'] } }]
+```
+
+A loss or lint finding in an included file names that file, not the page that
+includes it.
+
+A first line of `---` with no closing `---` line opens frontmatter that runs to
+the end of the file, so the page has no body. The build reports it as
+`frontmatter-unclosed`; to start a page with a thematic break, write `***`.
+
 ## HTML for what Markdown cannot say
 
 Carve goes to Docusaurus as Markdown, and some constructs have no Markdown

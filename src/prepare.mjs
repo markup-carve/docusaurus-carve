@@ -39,13 +39,25 @@ export async function convertCarve(source, options = {}) {
   // A loss is something the Markdown the docs plugin reads no longer says.
   for (const report of reports) {
     for (const loss of report.losses) {
-      warnings.push({ message: loss.message, rule: loss.code, line: loss.pos?.startLine, column: loss.pos?.startColumn, file: loss.pos?.file })
+      // Engines after 0.1.15 name an included file on the loss, not on its pos.
+      warnings.push({ message: loss.message, rule: loss.code, line: loss.pos?.startLine, column: loss.pos?.startColumn, file: loss.file ?? loss.pos?.file })
     }
     if (report.truncated) warnings.push({ message: `${report.totalLosses} Markdown export losses in total; the rest were not reported` })
   }
+  if (frontmatter && !closesFrontmatter(source, frontmatter)) {
+    warnings.push({
+      message: 'Frontmatter has no closing --- line, so it runs to the end of the file and the page has no body',
+      rule: 'frontmatter-unclosed',
+      line: 1,
+      column: 1,
+    })
+  }
   if (options.lint) {
+    const lint = options.lint === true ? {} : options.lint
     const reported = new Set(warnings.map((warning) => `${warning.rule}\0${warning.message}`))
-    for (const finding of carve.lintCarve(source, { includes, extensions: carveOptions.extensions })) {
+    const findings = carve.lintCarve(source, { includes, extensions: carveOptions.extensions, enabledRules: lint.enabledRules })
+    for (const finding of findings) {
+      if (finding.severity === 'Hint' && !lint.hints) continue
       if (!reported.has(`${finding.rule}\0${finding.message}`)) warnings.push(finding)
     }
   }
@@ -63,6 +75,12 @@ export async function convertCarve(source, options = {}) {
     throw new Error(`Frontmatter${sourcePath ? ` in ${sourcePath}` : ''} must be a mapping of keys to values`)
   }
   return `---\n${stringifyYaml(data).trimEnd()}\n---\n\n${body}`
+}
+
+function closesFrontmatter(source, frontmatter) {
+  const end = frontmatter.pos?.endLine
+  if (!end) return true
+  return end > 1 && source.split(/\r\n|\r|\n/)[end - 1]?.trimEnd() === '---'
 }
 
 /** The Markdown writer emits the frontmatter verbatim; convertCarve writes it once, normalized. */
