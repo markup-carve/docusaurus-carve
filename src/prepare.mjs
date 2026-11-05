@@ -2,7 +2,7 @@ import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promi
 import path from 'node:path'
 
 export async function convertCarve(source, options = {}) {
-  const [carve, { fileSystemResolver }, { parse: parseToml }, { parse: parseYaml, stringify: stringifyYaml }] = await Promise.all([
+  const [carve, { fileSystemResolver }, { parse: parseToml }, { parse: parseYaml, parseDocument: parseYamlDocument, stringify: stringifyYaml }] = await Promise.all([
     import('@markup-carve/carve'), import('@markup-carve/carve/node'), import('smol-toml'), import('yaml'),
   ])
   const carveOptions = options.carveOptions ?? {}
@@ -24,6 +24,7 @@ export async function convertCarve(source, options = {}) {
     warnings.push(...expanded.warnings)
     tree = expanded.doc
   }
+  const { frontmatter } = document
   const reports = []
   let body
   if (options.htmlBlocks) {
@@ -33,7 +34,7 @@ export async function convertCarve(source, options = {}) {
       ? carve.renderDocumentWithReport(tree, { ...carveOptions, target: 'markdown' })
       : carve.carveToMarkdownWithReport(source, carveOptions)
     reports.push(report)
-    body = report.value
+    body = withoutFrontmatter(carve, report.value, frontmatter)
   }
   // A loss is something the Markdown the docs plugin reads no longer says.
   for (const report of reports) {
@@ -49,15 +50,26 @@ export async function convertCarve(source, options = {}) {
     }
   }
   options.onWarnings?.(warnings.map((warning) => ({ ...warning, file: warning.file ?? sourcePath })))
-  if (!document.frontmatter) return body
+  if (!frontmatter) return body
 
-  const { format, content } = document.frontmatter
+  const { format, content } = frontmatter
   let data
-  if (format === 'yaml') data = parseYaml(content)
+  // YAML with no content (blank or comments only) parses as null; that is an empty mapping.
+  if (format === 'yaml') data = parseYamlDocument(content).contents === null ? {} : parseYaml(content)
   else if (format === 'toml') data = parseToml(content)
   else if (format === 'json') data = content.trim() === '' ? {} : JSON.parse(content)
   else throw new Error(`Docusaurus Carve does not support frontmatter format ${JSON.stringify(format)}`)
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error(`Frontmatter${sourcePath ? ` in ${sourcePath}` : ''} must be a mapping of keys to values`)
+  }
   return `---\n${stringifyYaml(data).trimEnd()}\n---\n\n${body}`
+}
+
+/** The Markdown writer emits the frontmatter verbatim; convertCarve writes it once, normalized. */
+function withoutFrontmatter(carve, markdown, frontmatter) {
+  if (!frontmatter) return markdown
+  const written = carve.renderDocument({ type: 'document', children: [], footnoteDefs: {}, frontmatter }, { target: 'markdown' })
+  return markdown.startsWith(written) ? markdown.slice(written.length).replace(/^\n+/, '') : markdown
 }
 
 const KEEP_MARKDOWN = new Set(['heading', 'link_reference_definition'])
