@@ -13,6 +13,23 @@ test('converts Carve semantics to Docusaurus-readable Markdown', async () => {
   assert.match(markdown, /\*careful\*/)
 })
 
+test('writes the frontmatter once, on every render path', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-frontmatter-'))
+  const sourcePath = path.join(root, 'page.crv')
+  const source = '---\ntitle: Test\n---\n\n# Hello\n'
+  for (const options of [{}, { sourcePath }, { htmlBlocks: true }, { sourcePath, includes: false }]) {
+    assert.equal(await convertCarve(source, options), '---\ntitle: Test\n---\n\n# Hello\n', JSON.stringify(options))
+  }
+})
+
+test('writes empty frontmatter as an empty mapping', async () => {
+  assert.equal(await convertCarve('---\n---\n\n# Hello\n'), '---\n{}\n---\n\n# Hello\n')
+})
+
+test('refuses frontmatter that is not a mapping', async () => {
+  await assert.rejects(() => convertCarve('---\n- a\n- b\n---\n\n# Hello\n', { sourcePath: '/docs/page.crv', includes: false }), /Frontmatter in \/docs\/page\.crv must be a mapping/)
+})
+
 test('mirrors ordinary docs and replaces .crv with .md', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-'))
   const input = path.join(root, 'docs')
