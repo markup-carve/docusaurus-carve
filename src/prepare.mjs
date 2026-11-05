@@ -2,7 +2,7 @@ import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promi
 import path from 'node:path'
 
 export async function convertCarve(source, options = {}) {
-  const [carve, { fileSystemResolver }, { parse: parseToml }, { parse: parseYaml, stringify: stringifyYaml }] = await Promise.all([
+  const [carve, { fileSystemResolver }, { parse: parseToml }, { parse: parseYaml, parseDocument: parseYamlDocument, stringify: stringifyYaml }] = await Promise.all([
     import('@markup-carve/carve'), import('@markup-carve/carve/node'), import('smol-toml'), import('yaml'),
   ])
   const carveOptions = options.carveOptions ?? {}
@@ -54,13 +54,12 @@ export async function convertCarve(source, options = {}) {
 
   const { format, content } = frontmatter
   let data
-  if (format === 'yaml') data = parseYaml(content)
+  // YAML with no content (blank or comments only) parses as null; that is an empty mapping.
+  if (format === 'yaml') data = parseYamlDocument(content).contents === null ? {} : parseYaml(content)
   else if (format === 'toml') data = parseToml(content)
   else if (format === 'json') data = content.trim() === '' ? {} : JSON.parse(content)
   else throw new Error(`Docusaurus Carve does not support frontmatter format ${JSON.stringify(format)}`)
-  // Empty YAML parses as null; Docusaurus needs a mapping.
-  data ??= {}
-  if (typeof data !== 'object' || Array.isArray(data)) {
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
     throw new Error(`Frontmatter${sourcePath ? ` in ${sourcePath}` : ''} must be a mapping of keys to values`)
   }
   return `---\n${stringifyYaml(data).trimEnd()}\n---\n\n${body}`

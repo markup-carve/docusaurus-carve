@@ -24,10 +24,13 @@ test('writes the frontmatter once, on every render path', async () => {
 
 test('writes empty frontmatter as an empty mapping', async () => {
   assert.equal(await convertCarve('---\n---\n\n# Hello\n'), '---\n{}\n---\n\n# Hello\n')
+  assert.equal(await convertCarve('---\n# a comment\n---\n\n# Hello\n'), '---\n{}\n---\n\n# Hello\n')
 })
 
 test('refuses frontmatter that is not a mapping', async () => {
-  await assert.rejects(() => convertCarve('---\n- a\n- b\n---\n\n# Hello\n', { sourcePath: '/docs/page.crv', includes: false }), /Frontmatter in \/docs\/page\.crv must be a mapping/)
+  for (const source of ['---\n- a\n- b\n---\n\n# Hello\n', '---\nnull\n---\n\n# Hello\n', '--- json\nnull\n---\n\n# Hello\n']) {
+    await assert.rejects(() => convertCarve(source, { sourcePath: '/docs/page.crv', includes: false }), /Frontmatter in \/docs\/page\.crv must be a mapping/, source)
+  }
 })
 
 test('mirrors ordinary docs and replaces .crv with .md', async () => {
