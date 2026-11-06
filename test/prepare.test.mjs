@@ -192,3 +192,44 @@ test('htmlBlocks applies to included content and still reports losses', async ()
   const own = result.warnings.filter((warning) => warning.file === path.join(input, '_part.crv') && warning.rule === 'destination-denied')
   assert.equal(own.length, 2, 'the included block and the partial itself each report the blanked link')
 })
+
+// Engines after 0.1.15 add these; the cases skip on an engine without them.
+const engine = await import('@markup-carve/carve')
+const claimsUnclosed = Boolean(engine.parse('---\ntitle: x\n').frontmatter)
+const lintsHints = engine.lintCarve('# A\n\npara\n\n---\n\nb\n').some((finding) => finding.severity === 'Hint')
+const optInRules = engine.lintCarve('See [here](https://example.com).\n', { enabledRules: ['non-descriptive-link-text'] }).length > 0
+
+test('warns when frontmatter runs to the end of the file', { skip: !claimsUnclosed && 'engine reads an unclosed --- as a break' }, async () => {
+  const warnings = []
+  const markdown = await convertCarve('---\ntitle: x\n\n# Lost\n', { onWarnings: (items) => warnings.push(...items) })
+  assert.doesNotMatch(markdown, /# Lost/)
+  assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['frontmatter-unclosed', 1]])
+})
+
+test('closed frontmatter draws no warning', async () => {
+  for (const source of ['---\ntitle: x\n---\n\n# H\n', '---\ntitle: x\n---', '---\r\ntitle: x\r\n---  \r\nbody\r\n', '---\n---\n']) {
+    const warnings = []
+    await convertCarve(source, { onWarnings: (items) => warnings.push(...items) })
+    assert.deepEqual(warnings, [], JSON.stringify(source))
+  }
+})
+
+test('lint skips hints unless asked', { skip: !lintsHints && 'engine reports no hints' }, async () => {
+  const rules = async (lint) => {
+    const warnings = []
+    await convertCarve('# A\n\npara\n\n---\n\nb\n', { lint, onWarnings: (items) => warnings.push(...items) })
+    return warnings.map((warning) => warning.rule)
+  }
+  assert.deepEqual(await rules(true), [])
+  assert.deepEqual(await rules({ hints: true }), ['thematic-break-spelling'])
+})
+
+test('lint runs the opt-in rules it is given', { skip: !optInRules && 'engine has no opt-in rules' }, async () => {
+  const rules = async (lint) => {
+    const warnings = []
+    await convertCarve('See [here](https://example.com).\n', { lint, onWarnings: (items) => warnings.push(...items) })
+    return warnings.map((warning) => warning.rule)
+  }
+  assert.deepEqual(await rules(true), [])
+  assert.deepEqual(await rules({ enabledRules: ['non-descriptive-link-text'] }), ['non-descriptive-link-text'])
+})
