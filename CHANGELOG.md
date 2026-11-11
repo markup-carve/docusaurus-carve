@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.5] - 2026-11-11
+
+Requires the Carve engine 0.1.16. Lint gains hint and opt-in rule controls, and frontmatter is written once.
+
+### Breaking
+
+- Require `@markup-carve/carve` 0.1.16.
+- Lint rule `a11y/heading-jump` is no longer an alias; use `heading-level-skip`. The engine now reports the old `|=>` cell alignment as `deprecated-cell-alignment` (write `|={>}`).
+
+### Fixes
+
+- A page's frontmatter reaches Docusaurus once instead of twice; empty frontmatter is `{}`, and frontmatter that is not a mapping fails with the file named (#37).
+- A loss in an included file names that file (#38).
+
+### Improvements
+
+- Lint hints are skipped unless `lint: { hints: true }`; `lint: { enabledRules: [...] }` turns on opt-in rules (#38).
+- A first-line `---` with no closer is reported as `frontmatter-unclosed`, since it now claims the whole file (#38).
+
+**Full Changelog**: https://github.com/markup-carve/docusaurus-carve/compare/0.1.4...0.1.5
+
 ## [0.1.4] - 2026-10-24
 
 Carve fences follow the current grammar. Rendering and Markdown loss warnings follow the published Carve engine.
