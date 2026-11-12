@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.5] - 2026-11-11
+## [0.1.5] - 2026-11-12
 
 Requires the Carve engine 0.1.16. Lint gains hint and opt-in rule controls, and frontmatter is written once.
 
