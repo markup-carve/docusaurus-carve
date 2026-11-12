@@ -17,3 +17,14 @@ const toc = mixed.match(/table-of-contents[\s\S]*?<\/ul>/)?.[0] ?? ''
 assert.match(toc, /Kept as Markdown/)
 assert.match(toc, /Rendered as HTML/)
 console.log('e2e: mixed page keeps its TOC and renders lossy blocks as HTML')
+
+// The README configuration (default options, default MDX format) compiles
+// autolinks, braces and math and keeps their text.
+const plain = await readFile(new URL('../example/build/plain/links/index.html', import.meta.url), 'utf8')
+assert.match(plain, /<p>See <a href="https:\/\/example\.com"[^>]*>https:\/\/example\.com<\/a> for more\.<\/p>/)
+assert.match(plain, /<p>Mail <a href="mailto:hello@example\.com"[^>]*>hello@example\.com<\/a>\.<\/p>/)
+assert.match(plain, /<p>Math \$\$e\^\{i\\pi\}\$\$\.<\/p>/)
+assert.match(plain, /<p>A literal \{brace\} here\.<\/p>/)
+assert.match(plain, /<p>Inline \$x\^\{2\}\$\.<\/p>/)
+assert.match(plain, /<p>Compare a &lt; b and c &gt; d, and a literal &lt;b&gt; tag\.<\/p>/)
+console.log('e2e: default MDX mirror compiles autolinks, braces and math')

@@ -33,6 +33,12 @@ The plugin creates a private Markdown mirror under Docusaurus' generated-files
 directory. It never rewrites source documents. A `.crv` and `.md` with the same
 relative stem are rejected because Docusaurus would assign both the same ID.
 
+The mirror follows the site's `markdown.format`. With the default `mdx`,
+Docusaurus compiles every page as MDX, where `<` opens JSX and `{` opens an
+expression, so the plugin escapes both in text and writes autolinks such as
+`<https://example.com>` as `[https://example.com](https://example.com)`. With
+`'md'` or `'detect'` the mirror is the plain CommonMark Carve writes.
+
 Carve parser/render options can be supplied as `carveOptions`. Other options
 are passed to `@docusaurus/plugin-content-docs`.
 

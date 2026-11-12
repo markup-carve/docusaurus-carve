@@ -26,15 +26,18 @@ export async function convertCarve(source, options = {}) {
   }
   const { frontmatter } = document
   const reports = []
+  const format = options.markdownFormat ?? 'mdx'
+  const mdx = format === 'mdx' ? await mdxSerializer() : undefined
   let body
   if (options.htmlBlocks) {
-    body = mixedBody(carve, tree, carveOptions, options.markdownFormat ?? 'mdx', reports, warnings)
+    body = mixedBody(carve, tree, carveOptions, format, mdx, reports, warnings)
   } else {
     const report = includes
       ? carve.renderDocumentWithReport(tree, { ...carveOptions, target: 'markdown' })
       : carve.carveToMarkdownWithReport(source, carveOptions)
     reports.push(report)
     body = withoutFrontmatter(carve, report.value, frontmatter)
+    if (mdx) body = mdx(body)
   }
   // A loss is something the Markdown the docs plugin reads no longer says.
   for (const report of reports) {
@@ -64,17 +67,37 @@ export async function convertCarve(source, options = {}) {
   options.onWarnings?.(warnings.map((warning) => ({ ...warning, file: warning.file ?? sourcePath })))
   if (!frontmatter) return body
 
-  const { format, content } = frontmatter
+  const { format: frontmatterFormat, content } = frontmatter
   let data
   // YAML with no content (blank or comments only) parses as null; that is an empty mapping.
-  if (format === 'yaml') data = parseYamlDocument(content).contents === null ? {} : parseYaml(content)
-  else if (format === 'toml') data = parseToml(content)
-  else if (format === 'json') data = content.trim() === '' ? {} : JSON.parse(content)
-  else throw new Error(`Docusaurus Carve does not support frontmatter format ${JSON.stringify(format)}`)
+  if (frontmatterFormat === 'yaml') data = parseYamlDocument(content).contents === null ? {} : parseYaml(content)
+  else if (frontmatterFormat === 'toml') data = parseToml(content)
+  else if (frontmatterFormat === 'json') data = content.trim() === '' ? {} : JSON.parse(content)
+  else throw new Error(`Docusaurus Carve does not support frontmatter format ${JSON.stringify(frontmatterFormat)}`)
   if (data === null || typeof data !== 'object' || Array.isArray(data)) {
     throw new Error(`Frontmatter${sourcePath ? ` in ${sourcePath}` : ''} must be a mapping of keys to values`)
   }
   return `---\n${stringifyYaml(data).trimEnd()}\n---\n\n${body}`
+}
+
+/**
+ * The writer targets CommonMark, where `<` and `{` are text; MDX reads them
+ * as JSX and expressions. Rewriting through mdast escapes both wherever MDX
+ * would parse them, and writes autolinks as `[url](url)`.
+ */
+async function mdxSerializer() {
+  const [{ fromMarkdown }, { toMarkdown }, { gfm }, { gfmFromMarkdown, gfmToMarkdown }, { mdxToMarkdown }] = await Promise.all([
+    import('mdast-util-from-markdown'), import('mdast-util-to-markdown'), import('micromark-extension-gfm'), import('mdast-util-gfm'), import('mdast-util-mdx'),
+  ])
+  return (markdown) => toMarkdown(fromMarkdown(markdown, { extensions: [gfm()], mdastExtensions: [gfmFromMarkdown()] }), {
+    extensions: [gfmToMarkdown(), mdxToMarkdown()],
+    resourceLink: true,
+    bullet: '-',
+    emphasis: '*',
+    fences: true,
+    listItemIndent: 'one',
+    rule: '-',
+  })
 }
 
 function closesFrontmatter(source, frontmatter) {
@@ -99,7 +122,7 @@ const squash = (html) => html.replace(/\s+/g, ' ').trim()
  * same HTML. Headings always stay Markdown so Docusaurus keeps the TOC, and
  * so does a block with a footnote reference or a site-relative link or image.
  */
-function mixedBody(carve, tree, carveOptions, format, reports, warnings) {
+function mixedBody(carve, tree, carveOptions, format, mdx, reports, warnings) {
   // The caller writes the frontmatter itself.
   const { frontmatter, ...resolved } = carve.resolve(tree, carveOptions)
   const htmlOptions = { ...carveOptions, sections: false }
@@ -131,7 +154,7 @@ function mixedBody(carve, tree, carveOptions, format, reports, warnings) {
   })
   const report = carve.renderDocumentWithReport({ ...resolved, children }, { ...carveOptions, target: 'markdown' })
   reports.push(report)
-  return report.value.replace(new RegExp(`^${nonce}(\\d+)$`, 'gm'), (_, index) => embedHtml(blocks[Number(index)], format))
+  return (mdx ? mdx(report.value) : report.value).replace(new RegExp(`^${nonce}(\\d+)$`, 'gm'), (_, index) => embedHtml(blocks[Number(index)], format))
 }
 
 const ABSOLUTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i
