@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.6] - 2026-11-12
+
+Pages build again with Docusaurus' default MDX format when they hold autolinks, braces or math.
+
+### Fixes
+
+- With the default `mdx` format the mirror is valid MDX: autolinks become links, and `{` and `<` in text are escaped, so `docusaurus build` no longer fails and math keeps its braces (#41).
+
+**Full Changelog**: https://github.com/markup-carve/docusaurus-carve/compare/0.1.5...0.1.6
+
 ## [0.1.5] - 2026-11-12
 
 Requires the Carve engine 0.1.17. Lint gains hint and opt-in rule controls, and frontmatter is written once.
