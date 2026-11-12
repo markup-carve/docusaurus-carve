@@ -2,11 +2,11 @@
 
 ## [0.1.5] - 2026-11-12
 
-Requires the Carve engine 0.1.16. Lint gains hint and opt-in rule controls, and frontmatter is written once.
+Requires the Carve engine 0.1.17. Lint gains hint and opt-in rule controls, and frontmatter is written once.
 
 ### Breaking
 
-- Require `@markup-carve/carve` 0.1.16.
+- Require `@markup-carve/carve` 0.1.17 (#38, #40).
 - Lint rule `a11y/heading-jump` is no longer an alias; use `heading-level-skip`. The engine now reports the old `|=>` cell alignment as `deprecated-cell-alignment` (write `|={>}`).
 
 ### Fixes
@@ -18,6 +18,7 @@ Requires the Carve engine 0.1.16. Lint gains hint and opt-in rule controls, and 
 
 - Lint hints are skipped unless `lint: { hints: true }`; `lint: { enabledRules: [...] }` turns on opt-in rules (#38).
 - A first-line `---` with no closer is reported as `frontmatter-unclosed`, since it now claims the whole file (#38).
+- Prism highlighting of `carve` fences follows carve-grammars 0.1.23, and rendering is faster with carve-js 0.1.17 (#40).
 
 **Full Changelog**: https://github.com/markup-carve/docusaurus-carve/compare/0.1.4...0.1.5
 
