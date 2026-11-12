@@ -9,12 +9,14 @@ test('the client grammar scopes footnote descriptions at the footnote body colum
   const { Prism } = require('prism-react-renderer')
   require(prismClientModule)
 
-  const types = (source) => Prism.tokenize(source, Prism.languages.carve)
-    .filter((token) => typeof token !== 'string')
-    .map((token) => token.type)
+  // The description line must sit inside the definition-list token, as the
+  // engine renders all three shapes as a <dl> in the footnote.
+  const describes = (source) => Prism.tokenize(source, Prism.languages.carve)
+    .some((token) => typeof token !== 'string' && token.type === 'definition-list'
+      && Array.isArray(token.content) && token.content.includes('definition\n'))
 
   for (const indent of ['   ', '  \t']) {
-    assert.ok(types(`[^f]: note\n${indent}:: term\n  : definition\n`).includes('footnote-description'))
+    assert.ok(describes(`[^f]: note\n${indent}:: term\n  : definition\n`))
   }
-  assert.ok(types('[^f]: note\n  \t:: term\n    : definition\n').includes('refused-description'))
+  assert.ok(describes('[^f]: note\n  \t:: term\n    : definition\n'))
 })
