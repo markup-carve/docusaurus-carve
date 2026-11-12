@@ -14,7 +14,7 @@ npm install @markup-carve/docusaurus-carve
 import carveDocs from '@markup-carve/docusaurus-carve'
 
 export default {
-  plugins: [[carveDocs, { path: 'docs' }]],
+  plugins: [[carveDocs, { path: 'docs', sidebarPath: './sidebars.js' }]],
   presets: [['classic', { docs: false }]],
 }
 ```

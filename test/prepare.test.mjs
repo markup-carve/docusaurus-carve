@@ -233,3 +233,21 @@ test('lint runs the opt-in rules it is given', { skip: !optInRules && 'engine ha
   assert.deepEqual(await rules(true), [])
   assert.deepEqual(await rules({ enabledRules: ['non-descriptive-link-text'] }), ['non-descriptive-link-text'])
 })
+
+test('the mdx mirror writes autolinks as links and escapes what MDX would parse', async () => {
+  assert.equal(await convertCarve('See <https://example.com> and <hello@example.com>.\n'), 'See [https://example.com](https://example.com) and [hello@example.com](mailto:hello@example.com).\n')
+  assert.equal(await convertCarve('A literal \\{brace\\} and \\<b> tag.\n'), 'A literal \\{brace} and \\<b> tag.\n')
+  assert.equal(await convertCarve('Inline $`x^{2}`.\n'), 'Inline $x^\\{2}$.\n')
+  assert.equal(await convertCarve('``` js\nx = {a: 1}\n```\n\nCode `{a}`.\n'), '```js\nx = {a: 1}\n```\n\nCode `{a}`.\n')
+})
+
+test('the mdx mirror escapes table cells, footnotes and htmlBlocks pages too', async () => {
+  const markdown = await convertCarve('|= A |\n| {x} |\n\nN[^n].\n\n[^n]: See <https://example.com>.\n\n{.note}\n:::\nIn {a} div.\n:::\n', { htmlBlocks: true })
+  assert.match(markdown, /\| \\\{x\} \|/)
+  assert.match(markdown, /\[\^n\]: See \[https:\/\/example\.com\]\(https:\/\/example\.com\)\./)
+  assert.match(markdown, /dangerouslySetInnerHTML=\{\{ __html: "<div class=\\"note\\">\\n  <p>In \{a\} div\.<\/p>/)
+})
+
+test('the md mirror keeps the CommonMark the writer wrote', async () => {
+  assert.equal(await convertCarve('See <https://example.com> and \\{brace\\}.\n', { markdownFormat: 'md' }), 'See <https://example.com> and {brace}.\n')
+})
