@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@docusaurus/plugin-content-docs": "^3.10.2",
-    "@markup-carve/carve": "github:markup-carve/carve-js#187bedb3762c8a1da218ed7c75cf7992a9914ee1",
+    "@markup-carve/carve": "github:markup-carve/carve-js#8fb2c9d9e4a49a149d17507070e02aab3043deee",
     "@markup-carve/carve-grammars": "^0.1.23",
     "mdast-util-from-markdown": "^2.0.2",
     "mdast-util-gfm": "^3.1.0",
