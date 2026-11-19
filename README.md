@@ -1,6 +1,6 @@
 # docusaurus-carve
 
-Docusaurus 3 docs plugin for `.crv` pages, using @markup-carve/carve 0.1.17 or later. It passes routing and metadata to the official docs plugin. Read the [Carve documentation](https://markup-carve.github.io/carve/) for the language syntax.
+Docusaurus 3 docs plugin for `.crv` pages. The `next2` line targets the Carve 0.2 engine and needs its Markdown writer, which is not released yet; see [Carve 0.2](docs/guide.md#carve-02). It passes routing and metadata to the official docs plugin. Read the [Carve documentation](https://markup-carve.github.io/carve/) for the language syntax.
 
 ## Install
 
