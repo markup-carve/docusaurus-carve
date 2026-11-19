@@ -69,4 +69,4 @@ export default async function docusaurusCarve(context, options = {}) {
   }
 }
 
-export { convertCarve, embedHtml, formatWarning, prepareDocs } from './prepare.mjs'
+export { convertCarve, embedHtml, formatWarning, MarkdownWriterUnavailableError, prepareDocs } from './prepare.mjs'
