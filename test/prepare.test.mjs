@@ -6,11 +6,8 @@ import test from 'node:test'
 import { convertCarve, formatWarning, prepareDocs } from '../src/index.mjs'
 import { markdownRegistry } from '../src/prepare.mjs'
 
-// The Carve 0.2 Markdown writer is not in the pinned engine yet; every case that writes the mirror waits for it.
-const hasMarkdownWriter = Boolean(await markdownRegistry())
-const needsMarkdown = { skip: !hasMarkdownWriter && 'needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076)' }
 
-test('converts Carve semantics to Docusaurus-readable Markdown', needsMarkdown, async () => {
+test('converts Carve semantics to Docusaurus-readable Markdown', async () => {
   const markdown = await convertCarve('---\ntitle: Test\n---\n\n# Hello\n\nA *strong* and /careful/ page.\n')
   assert.match(markdown, /^---\ntitle: Test\n---/)
   assert.match(markdown, /# Hello/)
@@ -18,7 +15,7 @@ test('converts Carve semantics to Docusaurus-readable Markdown', needsMarkdown, 
   assert.match(markdown, /\*careful\*/)
 })
 
-test('writes the frontmatter once, on every render path', needsMarkdown, async () => {
+test('writes the frontmatter once, on every render path', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-frontmatter-'))
   const sourcePath = path.join(root, 'page.crv')
   const source = '---\ntitle: Test\n---\n\n# Hello\n'
@@ -27,7 +24,7 @@ test('writes the frontmatter once, on every render path', needsMarkdown, async (
   }
 })
 
-test('writes empty frontmatter as an empty mapping', needsMarkdown, async () => {
+test('writes empty frontmatter as an empty mapping', async () => {
   assert.equal(await convertCarve('---\n---\n\n# Hello\n'), '---\n{}\n---\n\n# Hello\n')
   assert.equal(await convertCarve('---\n# a comment\n---\n\n# Hello\n'), '---\n{}\n---\n\n# Hello\n')
 })
@@ -38,7 +35,7 @@ test('refuses frontmatter that is not a mapping', async () => {
   }
 })
 
-test('mirrors ordinary docs and replaces .crv with .md', needsMarkdown, async () => {
+test('mirrors ordinary docs and replaces .crv with .md', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-'))
   const input = path.join(root, 'docs')
   const output = path.join(root, 'generated')
@@ -60,7 +57,7 @@ test('refuses ambiguous same-stem Carve and Markdown docs', async () => {
   await assert.rejects(() => prepareDocs(input, path.join(root, 'out')), /map to the same/)
 })
 
-test('expands includes from the source tree before writing the mirror', needsMarkdown, async () => {
+test('expands includes from the source tree before writing the mirror', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-include-'))
   const input = path.join(root, 'docs')
   const output = path.join(root, 'generated')
@@ -80,7 +77,7 @@ test('refuses a relative include root instead of rooting it at the cwd', async (
   await assert.rejects(() => prepareDocs(input, output, { includeRoot: '..' }), /absolute path/)
 })
 
-test('includes only the named region of a file', needsMarkdown, async () => {
+test('includes only the named region of a file', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-region-'))
   const input = path.join(root, 'docs')
   await mkdir(input, { recursive: true })
@@ -95,7 +92,7 @@ test('includes only the named region of a file', needsMarkdown, async () => {
   assert.deepEqual(result.warnings, [])
 })
 
-test('reports what the Markdown export lost, with its position', needsMarkdown, async () => {
+test('reports what the Markdown export lost, with its position', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-loss-'))
   const input = path.join(root, 'docs')
   await mkdir(input, { recursive: true })
@@ -110,13 +107,13 @@ test('reports what the Markdown export lost, with its position', needsMarkdown, 
   ])
 })
 
-test('reports losses on the path without includes too', needsMarkdown, async () => {
+test('reports losses on the path without includes too', async () => {
   const warnings = []
   await convertCarve('[x](javascript:y)\n', { onWarnings: (items) => warnings.push(...items) })
   assert.deepEqual(warnings.map((warning) => warning.rule), ['destination-denied'])
 })
 
-test('lints during prepare only when asked, and reports an include failure once', needsMarkdown, async () => {
+test('lints during prepare only when asked, and reports an include failure once', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-lint-'))
   const input = path.join(root, 'docs')
   await mkdir(input, { recursive: true })
@@ -135,12 +132,12 @@ test('lints during prepare only when asked, and reports an include failure once'
   ])
 })
 
-test('htmlBlocks is off by default', needsMarkdown, async () => {
+test('htmlBlocks is off by default', async () => {
   const markdown = await convertCarve('{.note}\n:::\nInside.\n:::\n')
   assert.equal(markdown, 'Inside.\n')
 })
 
-test('htmlBlocks keeps what Markdown can carry and renders the rest as HTML', needsMarkdown, async () => {
+test('htmlBlocks keeps what Markdown can carry and renders the rest as HTML', async () => {
   const source = '---\ntitle: Mixed\n---\n\n# Title\n\nA *strong* paragraph.\n\n{.note}\n:::\nInside a div.\n:::\n\n![Alt](https://example.com/a.png)\n^ A caption\n'
   const markdown = await convertCarve(source, { htmlBlocks: true })
   assert.equal(markdown, [
@@ -152,7 +149,7 @@ test('htmlBlocks keeps what Markdown can carry and renders the rest as HTML', ne
   ].join('\n'))
 })
 
-test('htmlBlocks writes one-line raw HTML for the CommonMark format', needsMarkdown, async () => {
+test('htmlBlocks writes one-line raw HTML for the CommonMark format', async () => {
   const markdown = await convertCarve('{.note}\n:::\nA\n\n```\nx\n\ny\n```\n:::\n', { htmlBlocks: true, markdownFormat: 'md' })
   const [line, ...rest] = markdown.trimEnd().split('\n')
   assert.deepEqual(rest, [])
@@ -160,7 +157,7 @@ test('htmlBlocks writes one-line raw HTML for the CommonMark format', needsMarkd
   assert.match(line, /x&#10;&#10;y/)
 })
 
-test('htmlBlocks keeps a block with a footnote reference as Markdown, and says so', needsMarkdown, async () => {
+test('htmlBlocks keeps a block with a footnote reference as Markdown, and says so', async () => {
   const warnings = []
   const markdown = await convertCarve('{.note}\n:::\nIn a div[^1].\n:::\n\n[^1]: The note.\n', {
     htmlBlocks: true,
@@ -172,7 +169,7 @@ test('htmlBlocks keeps a block with a footnote reference as Markdown, and says s
   assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['html-block-footnote', 1], ['markdown-container-flattened', 1]])
 })
 
-test('htmlBlocks keeps a block with a site-relative link or image as Markdown', needsMarkdown, async () => {
+test('htmlBlocks keeps a block with a site-relative link or image as Markdown', async () => {
   const warnings = []
   const markdown = await convertCarve(
     '{.a}\n:::\nSee [other](other.md).\n:::\n\n{.b}\n:::\n![Logo](./logo.png)\n:::\n\n{.c}\n:::\nSee [site](https://example.com) and [top](#top).\n:::\n',
@@ -189,7 +186,7 @@ test('htmlBlocks keeps a block with a site-relative link or image as Markdown', 
   ])
 })
 
-test('htmlBlocks applies to included content and still reports losses', needsMarkdown, async () => {
+test('htmlBlocks applies to included content and still reports losses', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-mixed-'))
   const input = path.join(root, 'docs')
   await mkdir(input, { recursive: true })
@@ -202,7 +199,7 @@ test('htmlBlocks applies to included content and still reports losses', needsMar
   assert.equal(own.length, 2, 'the included block and the partial itself each report the blanked link')
 })
 
-test('warns when frontmatter runs to the end of the file', needsMarkdown, async () => {
+test('warns when frontmatter runs to the end of the file', async () => {
   const warnings = []
   const markdown = await convertCarve('---\ntitle: x\n\n# Lost\n', { onWarnings: (items) => warnings.push(...items) })
   assert.doesNotMatch(markdown, /# Lost/)
@@ -210,7 +207,7 @@ test('warns when frontmatter runs to the end of the file', needsMarkdown, async 
   assert.deepEqual(warnings.map((warning) => [warning.rule, warning.line]), [['unclosed-frontmatter', 1]])
 })
 
-test('closed frontmatter draws no warning', needsMarkdown, async () => {
+test('closed frontmatter draws no warning', async () => {
   for (const source of ['---\ntitle: x\n---\n\n# H\n', '---\ntitle: x\n---', '---\r\ntitle: x\r\n---  \r\nbody\r\n', '---\n---\n']) {
     const warnings = []
     await convertCarve(source, { onWarnings: (items) => warnings.push(...items) })
@@ -218,7 +215,7 @@ test('closed frontmatter draws no warning', needsMarkdown, async () => {
   }
 })
 
-test('lint skips hints unless asked', needsMarkdown, async () => {
+test('lint skips hints unless asked', async () => {
   const rules = async (lint) => {
     const warnings = []
     await convertCarve('# A\n\npara\n\n---\n\nb\n', { lint, onWarnings: (items) => warnings.push(...items) })
@@ -228,7 +225,7 @@ test('lint skips hints unless asked', needsMarkdown, async () => {
   assert.deepEqual(await rules({ hints: true }), ['thematic-break-spelling'])
 })
 
-test('lint runs the opt-in rules it is given', needsMarkdown, async () => {
+test('lint runs the opt-in rules it is given', async () => {
   const rules = async (lint) => {
     const warnings = []
     await convertCarve('See [here](https://example.com).\n', { lint, onWarnings: (items) => warnings.push(...items) })
@@ -238,29 +235,24 @@ test('lint runs the opt-in rules it is given', needsMarkdown, async () => {
   assert.deepEqual(await rules({ enabledRules: ['non-descriptive-link-text'] }), ['non-descriptive-link-text'])
 })
 
-test('the mdx mirror writes autolinks as links and escapes what MDX would parse', needsMarkdown, async () => {
+test('the mdx mirror writes autolinks as links and escapes what MDX would parse', async () => {
   assert.equal(await convertCarve('See <https://example.com> and <hello@example.com>.\n'), 'See [https://example.com](https://example.com) and [hello@example.com](mailto:hello@example.com).\n')
   assert.equal(await convertCarve('A literal \\{brace\\} and \\<b> tag.\n'), 'A literal \\{brace} and \\<b> tag.\n')
   assert.equal(await convertCarve('Inline $`x^{2}`.\n'), 'Inline $x^\\{2}$.\n')
   assert.equal(await convertCarve('``` js\nx = {a: 1}\n```\n\nCode `{a}`.\n'), '```js\nx = {a: 1}\n```\n\nCode `{a}`.\n')
 })
 
-test('the mdx mirror escapes table cells, footnotes and htmlBlocks pages too', needsMarkdown, async () => {
+test('the mdx mirror escapes table cells, footnotes and htmlBlocks pages too', async () => {
   const markdown = await convertCarve('|= A |\n| {x} |\n\nN[^n].\n\n[^n]: See <https://example.com>.\n\n{.note}\n:::\nIn {a} div.\n:::\n', { htmlBlocks: true })
   assert.match(markdown, /\| \\\{x\} \|/)
   assert.match(markdown, /\[\^n\]: See \[https:\/\/example\.com\]\(https:\/\/example\.com\)\./)
   assert.match(markdown, /dangerouslySetInnerHTML=\{\{ __html: "<div class=\\"note\\">\\n  <p>In \{a\} div\.<\/p>/)
 })
 
-test('the md mirror keeps the CommonMark the writer wrote', needsMarkdown, async () => {
+test('the md mirror keeps the CommonMark the writer wrote', async () => {
   assert.equal(await convertCarve('See <https://example.com> and \\{brace\\}.\n', { markdownFormat: 'md' }), 'See <https://example.com> and {brace}.\n')
 })
 
-test('without the Markdown writer, conversion stops with a clear error', { skip: hasMarkdownWriter && 'the engine has the Markdown writer' }, async () => {
-  const warnings = []
-  await assert.rejects(
-    () => convertCarve('# Hello\n\n[x](#nope)\n', { lint: true, onWarnings: (items) => warnings.push(...items) }),
-    (error) => error.code === 'writer-unavailable' && /Markdown writer is not available yet/.test(error.message),
-  )
-  assert.deepEqual(warnings.map((warning) => warning.rule), ['broken-fragment-link'])
+test('the pinned engine exposes the Markdown writer', async () => {
+  assert.ok(await markdownRegistry())
 })
