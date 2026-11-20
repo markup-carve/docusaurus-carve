@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, next2]
   pull_request:
-    branches: [main]
+    branches: [main, next2]
 # Every job declares timeout-minutes so a hung step fails in minutes
 # rather than inheriting the 360-minute GitHub default.
 
@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        node-version: ['20', '22']
+        node-version: ['22', '24']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -21,4 +21,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
-      - run: npm run test:all
+      - run: npm test
+      - run: npm run test:e2e
