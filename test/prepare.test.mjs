@@ -256,3 +256,12 @@ test('the md mirror keeps the CommonMark the writer wrote', async () => {
 test('the pinned engine exposes the Markdown writer', async () => {
   assert.ok(await markdownRegistry())
 })
+
+test('counts include diagnostics past the engine cap instead of dropping them', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'docusaurus-carve-cap-'))
+  const source = Array.from({ length: 103 }, (_, i) => `{{ missing${i}.crv }}`).join('\n\n') + '\n'
+  let warnings = []
+  await convertCarve(source, { sourcePath: path.join(root, 'page.crv'), onWarnings: (list) => { warnings = list } })
+  assert.equal(warnings.filter((warning) => warning.rule === 'include-not-found').length, 100)
+  assert.ok(warnings.some((warning) => warning.message === '3 more include diagnostics were not reported'))
+})

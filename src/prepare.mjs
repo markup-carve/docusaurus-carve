@@ -143,6 +143,7 @@ export async function convertCarve(source, options = {}) {
       warnings.push(warningOf(carve, source, diagnostic, includeRoot))
     }
   }
+  if (parsed.suppressedDiagnostics) warnings.push({ message: `${parsed.suppressedDiagnostics} more include diagnostics were not reported` })
   options.onWarnings?.(warnings.map((warning) => ({ ...warning, file: warning.file ?? sourcePath })))
   if (!frontmatter) return body
   return `---\n${stringifyYaml(data).trimEnd()}\n---\n\n${body}`
