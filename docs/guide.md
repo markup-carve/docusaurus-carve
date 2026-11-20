@@ -146,11 +146,10 @@ Docusaurus 3 dependency) is used.
 
 The `next2` line runs on the Carve 0.2 engine, pinned to the carve-js `next2`
 branch by commit until 0.2 is published. The mirror is written with the
-engine's Markdown writer, which carve-js 0.2 has not shipped yet
-(markup-carve/carve-js#5076). Until it lands, converting a page fails with a
-`MarkdownWriterUnavailableError` (`code: 'writer-unavailable'`) that says so;
-the warnings found up to then are still reported. The plugin picks the writer
-up from the engine's `export` entry as soon as the engine has it.
+engine's Markdown writer from its `export` entry. An engine without that writer
+makes conversion fail with a `MarkdownWriterUnavailableError`
+(`code: 'writer-unavailable'`); the warnings found up to then are still
+reported.
 
 ## Scope
 
