@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+Runs on the Carve 0.2 engine (carve-js `next2`, pinned by commit until 0.2 is published).
+
+### Breaking
+
+- `carveOptions` take Carve 0.2 option names: `extensions` and `headingIds` go to the parse, the rest to the writers (`allowRawHtml` is now `rawHtml`, off by default).
+- The mirror needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076); until the engine has it, conversion fails with `MarkdownWriterUnavailableError` (`writer-unavailable`).
+- Include problems are reported as `include-not-found`, `include-outside-root` or `include-unreadable`, and unclosed frontmatter as the engine's `unclosed-frontmatter`.
+- Warning lines follow Carve 0.2 positions: a block with an attribute line starts at that line.
+
 ## [0.1.6] - 2026-11-12
 
 Pages build again with Docusaurus' default MDX format when they hold autolinks, braces or math.

@@ -1,4 +1,4 @@
-# Links and braces
+= Links and braces
 
 See <https://example.com> for more.
 
@@ -6,8 +6,8 @@ Mail <hello@example.com>.
 
 Math $$`e^{i\pi}`.
 
-A literal \{brace\} here.
+A literal {brace} here.
 
 Inline $`x^{2}`.
 
-Compare a < b and c > d, and a literal \<b> tag.
+Compare a < b and c > d, and a literal <b> tag.
