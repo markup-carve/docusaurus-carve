@@ -144,8 +144,8 @@ Docusaurus 3 dependency) is used.
 
 ## Carve 0.2
 
-The `next2` line runs on the Carve 0.2 engine, pinned to the carve-js `next2`
-branch by commit until 0.2 is published. The mirror is written with the
+The `main` branch runs on the Carve 0.2 engine, pinned to a carve-js `main`
+commit until 0.2 is published. The mirror is written with the
 engine's Markdown writer from its `export` entry. An engine without that writer
 makes conversion fail with a `MarkdownWriterUnavailableError`
 (`code: 'writer-unavailable'`); the warnings found up to then are still
