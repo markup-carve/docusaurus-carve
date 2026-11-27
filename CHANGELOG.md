@@ -2,14 +2,22 @@
 
 ## [Unreleased]
 
-Runs on the Carve 0.2 engine (carve-js `next2`, pinned by commit until 0.2 is published).
+## [0.2.0] - 2026-11-27
+
+Runs on the Carve 0.2 engine.
 
 ### Breaking
 
 - `carveOptions` take Carve 0.2 option names: `extensions` and `headingIds` go to the parse, the rest to the writers (`allowRawHtml` is now `rawHtml`, off by default).
-- The mirror needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076); until the engine has it, conversion fails with `MarkdownWriterUnavailableError` (`writer-unavailable`).
+- The mirror needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076); an engine without it makes conversion fail with `MarkdownWriterUnavailableError` (`writer-unavailable`).
 - Include problems are reported as `include-not-found`, `include-outside-root` or `include-unreadable`, and unclosed frontmatter as the engine's `unclosed-frontmatter`.
 - Warning lines follow Carve 0.2 positions: a block with an attribute line starts at that line.
+
+### Fixes
+
+- A page with more than 100 failing includes ends its warnings with the count of the ones the engine left out (#50).
+
+**Full Changelog**: https://github.com/markup-carve/docusaurus-carve/compare/0.1.6...0.2.0
 
 ## [0.1.6] - 2026-11-12
 
